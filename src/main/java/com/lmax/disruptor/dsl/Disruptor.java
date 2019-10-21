@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class Disruptor<T>
 {
+
     private final RingBuffer<T> ringBuffer;
     private final Executor executor;
     private final ConsumerRepository<T> consumerRepository = new ConsumerRepository<>();
@@ -294,6 +295,7 @@ public class Disruptor<T>
     @SuppressWarnings("varargs")
     public final EventHandlerGroup<T> after(final EventHandler<T>... handlers)
     {
+    	//上一组的记录
         final Sequence[] sequences = new Sequence[handlers.length];
         for (int i = 0, handlersLength = handlers.length; i < handlersLength; i++)
         {
@@ -540,13 +542,18 @@ public class Disruptor<T>
     {
         checkNotStarted();
 
+        //各个消费者的消费进度
         final Sequence[] processorSequences = new Sequence[eventHandlers.length];
+        
+        //每一组消费者都对应一个Barrier
         final SequenceBarrier barrier = ringBuffer.newBarrier(barrierSequences);
-
+        
+        
         for (int i = 0, eventHandlersLength = eventHandlers.length; i < eventHandlersLength; i++)
         {
             final EventHandler<? super T> eventHandler = eventHandlers[i];
 
+            //每个消费者都是一个Runnable 实现
             final BatchEventProcessor<T> batchEventProcessor =
                 new BatchEventProcessor<>(ringBuffer, barrier, eventHandler);
 
@@ -556,6 +563,7 @@ public class Disruptor<T>
             }
 
             consumerRepository.add(batchEventProcessor, eventHandler, barrier);
+            //获取消费者记录
             processorSequences[i] = batchEventProcessor.getSequence();
         }
 
@@ -564,6 +572,11 @@ public class Disruptor<T>
         return new EventHandlerGroup<>(this, consumerRepository, processorSequences);
     }
 
+    /**
+     *          加入到 AbstractSequencer 的 gatingSequences里面
+     * @param barrierSequences 前面一组
+     * @param processorSequences 新加入的一组
+     */
     private void updateGatingSequencesForNextInChain(final Sequence[] barrierSequences, final Sequence[] processorSequences)
     {
         if (processorSequences.length > 0)
@@ -592,7 +605,9 @@ public class Disruptor<T>
     EventHandlerGroup<T> createWorkerPool(
         final Sequence[] barrierSequences, final WorkHandler<? super T>[] workHandlers)
     {
+    	
         final SequenceBarrier sequenceBarrier = ringBuffer.newBarrier(barrierSequences);
+        
         final WorkerPool<T> workerPool = new WorkerPool<>(ringBuffer, sequenceBarrier, exceptionHandler, workHandlers);
 
 

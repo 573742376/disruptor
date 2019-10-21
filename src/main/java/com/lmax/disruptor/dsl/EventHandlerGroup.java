@@ -32,6 +32,10 @@ public class EventHandlerGroup<T>
 {
     private final Disruptor<T> disruptor;
     private final ConsumerRepository<T> consumerRepository;
+    /**
+             * 消费者进度记录 这个是复制内容 不是里面的引用
+             * 上一组的记录
+     */
     private final Sequence[] sequences;
 
     EventHandlerGroup(
@@ -134,6 +138,8 @@ public class EventHandlerGroup<T>
     }
 
     /**
+              * 这个方法一定的和Disruptor里面的同名方法区别开来
+       Disruptor里面的那个方法给 createEventProcessors 方法第一个参数传入的是空数组 这个方法是 上一组消费者组有多少个消费者 就传多长的数组
      * <p>Set up batch handlers to handle events from the ring buffer. These handlers will only process events
      * after every {@link EventProcessor} in this group has processed the event.</p>
      *

@@ -22,12 +22,21 @@ package com.lmax.disruptor;
  */
 final class ProcessingSequenceBarrier implements SequenceBarrier
 {
+	/**等待策略 **/
     private final WaitStrategy waitStrategy;
+    
+    /**上一组消费者 **/
     private final Sequence dependentSequence;
+    
+    /** **/
     private volatile boolean alerted = false;
+    
+    /**当前生产者记录 **/
     private final Sequence cursorSequence;
+    
+    /**AbstractSequencer 为什么不直接传对象？ **/
     private final Sequencer sequencer;
-
+    
     ProcessingSequenceBarrier(
         final Sequencer sequencer,
         final WaitStrategy waitStrategy,

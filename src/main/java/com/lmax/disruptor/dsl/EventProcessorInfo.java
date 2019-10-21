@@ -34,6 +34,7 @@ class EventProcessorInfo<T> implements ConsumerInfo
     private final EventProcessor eventprocessor;
     private final EventHandler<? super T> handler;
     private final SequenceBarrier barrier;
+    
     private boolean endOfChain = true;
 
     EventProcessorInfo(

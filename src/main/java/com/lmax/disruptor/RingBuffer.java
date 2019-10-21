@@ -28,13 +28,27 @@ abstract class RingBufferPad
 
 abstract class RingBufferFields<E> extends RingBufferPad
 {
+	/**entries两边填充空余的大小 32 后者 16 **/
     private static final int BUFFER_PAD;
+    /**entries数组里面有实际元素的开始位置 **/
     private static final long REF_ARRAY_BASE;
+    /**2 用于位移用乘4 相当与 << 2  乘8 相当与 << 3   位移速度快 **/
     private static final int REF_ELEMENT_SHIFT;
+    
     private static final Unsafe UNSAFE = Util.getUnsafe();
 
     static
     {
+    	/**
+    	 *    取数组中一个元素的大小
+    	 * 64位操作系统下   
+    	 *    所有对象都是4 基本类型的数组按照基本类型的长度来 例如
+    	 * Object Integer Long Double Byte 等对象 是 4
+    	 * long 是 8
+    	 * int 也是 4
+    	 * short 是 2
+    	 * byte 是 1
+    	 */
         final int scale = UNSAFE.arrayIndexScale(Object[].class);
         if (4 == scale)
         {
@@ -53,9 +67,14 @@ abstract class RingBufferFields<E> extends RingBufferPad
         REF_ARRAY_BASE = UNSAFE.arrayBaseOffset(Object[].class) + 128;
     }
 
+    /**用于快速定位元素的位置 用 & 这里是奇数，奇书分布均匀 **/
     private final long indexMask;
+    /**放消息的数组 两边是填充的元素 **/
     private final Object[] entries;
+    /**数组大小 **/
     protected final int bufferSize;
+    
+    /**Multi 或者是 single **/
     protected final Sequencer sequencer;
 
     RingBufferFields(
@@ -75,10 +94,17 @@ abstract class RingBufferFields<E> extends RingBufferPad
         }
 
         this.indexMask = bufferSize - 1;
+        
         this.entries = new Object[sequencer.getBufferSize() + 2 * BUFFER_PAD];
+        
         fill(eventFactory);
     }
 
+    /**
+              * 预创建对象，工厂设计模式的典型应用
+       
+     * @param eventFactory
+     */
     private void fill(EventFactory<E> eventFactory)
     {
         for (int i = 0; i < bufferSize; i++)
@@ -87,6 +113,11 @@ abstract class RingBufferFields<E> extends RingBufferPad
         }
     }
 
+    /**
+           * 更具序号获取数组中的元素
+     * @param sequence
+     * @return
+     */
     @SuppressWarnings("unchecked")
     protected final E elementAt(long sequence)
     {

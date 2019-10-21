@@ -35,12 +35,20 @@ public final class BatchEventProcessor<T>
     private static final int RUNNING = HALTED + 1;
 
     private final AtomicInteger running = new AtomicInteger(IDLE);
+    
     private ExceptionHandler<? super T> exceptionHandler = new FatalExceptionHandler();
+    
+    /**RingBuffer **/
     private final DataProvider<T> dataProvider;
+    /**一组对应一个 这么就是一组那凡是调用了 disruptor的 createEventProcessors 方法**/
     private final SequenceBarrier sequenceBarrier;
+    /**一个消费者 **/
     private final EventHandler<? super T> eventHandler;
+    /**当前消费者消费到哪里了 **/
     private final Sequence sequence = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
+    
     private final TimeoutHandler timeoutHandler;
+    
     private final BatchStartAware batchStartAware;
 
     /**

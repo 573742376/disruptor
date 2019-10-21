@@ -30,11 +30,16 @@ public abstract class AbstractSequencer implements Sequencer
     private static final AtomicReferenceFieldUpdater<AbstractSequencer, Sequence[]> SEQUENCE_UPDATER =
         AtomicReferenceFieldUpdater.newUpdater(AbstractSequencer.class, Sequence[].class, "gatingSequences");
 
+    /**环行数组的大小 **/
     protected final int bufferSize;
+    
+    /**等待策略 **/
     protected final WaitStrategy waitStrategy;
+    
+    /**生产者的计数器，准确的说应该是生产游标 **/
     protected final Sequence cursor = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
     
-    /**handler的计数器 **/
+    /**消费者计数器，因为有可能是多个消费者所以用数组记录 **/
     protected volatile Sequence[] gatingSequences = new Sequence[0];
 
     /**
