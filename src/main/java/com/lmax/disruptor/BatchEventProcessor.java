@@ -170,13 +170,14 @@ public final class BatchEventProcessor<T>
                     batchStartAware.onBatchStart(availableSequence - nextSequence + 1);
                 }
 
+                
                 while (nextSequence <= availableSequence)
                 {
                     event = dataProvider.get(nextSequence);
                     eventHandler.onEvent(event, nextSequence, nextSequence == availableSequence);
                     nextSequence++;
                 }
-
+                //记录当前消费到哪里了
                 sequence.set(availableSequence);
             }
             catch (final TimeoutException e)

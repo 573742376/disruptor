@@ -36,10 +36,10 @@ public abstract class AbstractSequencer implements Sequencer
     /**等待策略 **/
     protected final WaitStrategy waitStrategy;
     
-    /**生产者的计数器，准确的说应该是生产游标 **/
+    /** 生产者生产到哪里了 **/
     protected final Sequence cursor = new Sequence(Sequencer.INITIAL_CURSOR_VALUE);
     
-    /**消费者计数器，因为有可能是多个消费者所以用数组记录 **/
+    /**最后一组消费者,消费记录 **/
     protected volatile Sequence[] gatingSequences = new Sequence[0];
 
     /**

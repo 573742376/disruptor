@@ -25,7 +25,7 @@ final class ProcessingSequenceBarrier implements SequenceBarrier
 	/**等待策略 **/
     private final WaitStrategy waitStrategy;
     
-    /**上一组消费者 **/
+    /**依赖的上一组消费者进度 ,如果是第一组那就是当前生产者进度**/
     private final Sequence dependentSequence;
     
     /** **/
@@ -56,14 +56,18 @@ final class ProcessingSequenceBarrier implements SequenceBarrier
         }
     }
 
+    /**
+     * 获取合法的消费者序号
+     */
     @Override
     public long waitFor(final long sequence)
         throws AlertException, InterruptedException, TimeoutException
     {
         checkAlert();
-
+        
         long availableSequence = waitStrategy.waitFor(sequence, cursorSequence, dependentSequence, this);
 
+        //这个判断貌似是多余的???
         if (availableSequence < sequence)
         {
             return availableSequence;

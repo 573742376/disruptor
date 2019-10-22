@@ -31,10 +31,14 @@ public final class BlockingWaitStrategy implements WaitStrategy
         throws AlertException, InterruptedException
     {
         long availableSequence;
+        //消费者消费大于生产者
         if (cursorSequence.get() < sequence)
         {
+        	
             synchronized (mutex)
             {
+            	//为什么这里时循环判断等待了,就是因为生产者每生产发布一个消息都会唤醒
+            	//而在唤醒的时候 这里未必就是false
                 while (cursorSequence.get() < sequence)
                 {
                     barrier.checkAlert();
@@ -43,12 +47,17 @@ public final class BlockingWaitStrategy implements WaitStrategy
             }
         }
 
+        //如果时第一组就是生产者 上面的判断了这里肯定能通过
+        //如果这里时依赖上一组的消费者,这里就是上一组的消费记录,当前组一定要在上一组消费完了才能消费
+        //确保在之后才能执行
         while ((availableSequence = dependentSequence.get()) < sequence)
         {
             barrier.checkAlert();
             ThreadHints.onSpinWait();
         }
 
+        //返回最新的生产序号或者上一组消费过的并且大于sequence的
+        //也就是说这里不一定是大于1 加入要获取3 又可能返回 5
         return availableSequence;
     }
 
@@ -57,6 +66,7 @@ public final class BlockingWaitStrategy implements WaitStrategy
     {
         synchronized (mutex)
         {
+        	//发布的时候唤醒等待的消费者 可以消费了
             mutex.notifyAll();
         }
     }

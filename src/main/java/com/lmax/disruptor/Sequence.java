@@ -26,7 +26,7 @@ class LhsPadding
 }
 
 class Value extends LhsPadding
-{
+{   
     protected volatile long value;
 }
 

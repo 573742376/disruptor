@@ -62,7 +62,10 @@ public class Disruptor<T>
     private final RingBuffer<T> ringBuffer;
     private final Executor executor;
     private final ConsumerRepository<T> consumerRepository = new ConsumerRepository<>();
+    
+    /**队列是否已经开启 **/
     private final AtomicBoolean started = new AtomicBoolean(false);
+    
     private ExceptionHandler<? super T> exceptionHandler = new ExceptionHandlerWrapper<>();
 
     /**
@@ -297,6 +300,7 @@ public class Disruptor<T>
     {
     	//上一组的记录
         final Sequence[] sequences = new Sequence[handlers.length];
+        
         for (int i = 0, handlersLength = handlers.length; i < handlersLength; i++)
         {
             sequences[i] = consumerRepository.getSequenceFor(handlers[i]);
@@ -383,6 +387,7 @@ public class Disruptor<T>
     }
 
     /**
+     * 启动消费者
      * <p>Starts the event processors and returns the fully configured ring buffer.</p>
      *
      * <p>The ring buffer is set up to prevent overwriting any entry that is yet to
@@ -542,7 +547,7 @@ public class Disruptor<T>
     {
         checkNotStarted();
 
-        //各个消费者的消费进度
+        //这Group消费者的消费进度
         final Sequence[] processorSequences = new Sequence[eventHandlers.length];
         
         //每一组消费者都对应一个Barrier
@@ -553,7 +558,7 @@ public class Disruptor<T>
         {
             final EventHandler<? super T> eventHandler = eventHandlers[i];
 
-            //每个消费者都是一个Runnable 实现
+            //每个消费者都是一个Runnable实现 稍后会作为一个线程启动
             final BatchEventProcessor<T> batchEventProcessor =
                 new BatchEventProcessor<>(ringBuffer, barrier, eventHandler);
 

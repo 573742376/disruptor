@@ -106,45 +106,45 @@ public final class MultiProducerSequencer extends AbstractSequencer
     }
 
     /**
+     * 多生产者模式下获取序号核心方法
      * @see Sequencer#next(int)
      */
     @Override
-    public long next(int n)
-    {
-        if (n < 1 || n > bufferSize)
-        {
+    public long next(int n){
+    	
+        if (n < 1 || n > bufferSize){
             throw new IllegalArgumentException("n must be > 0 and < bufferSize");
         }
 
         long current;
         long next;
 
-        do
-        {
+        do{
+        	//获取当前序号
             current = cursor.get();
+            //要获取的下一个序号
             next = current + n;
-
+            //用于判断是否绕环
             long wrapPoint = next - bufferSize;
+            //当前最慢消费者序号
             long cachedGatingSequence = gatingSequenceCache.get();
-
-            if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current)
-            {
+            //查看单生产者模式注释
+            if (wrapPoint > cachedGatingSequence || cachedGatingSequence > current){
+            	
                 long gatingSequence = Util.getMinimumSequence(gatingSequences, current);
 
-                if (wrapPoint > gatingSequence)
-                {
+                if (wrapPoint > gatingSequence){
                     LockSupport.parkNanos(1); // TODO, should we spin based on the wait strategy?
                     continue;
                 }
 
                 gatingSequenceCache.set(gatingSequence);
-            }
-            else if (cursor.compareAndSet(current, next))
-            {
+            //这里原子修改, 其他不成功的消费继续循环获取,直到成功为止   
+            }else if (cursor.compareAndSet(current, next)){
+            	
                 break;
             }
-        }
-        while (true);
+        }while (true);
 
         return next;
     }
@@ -198,6 +198,9 @@ public final class MultiProducerSequencer extends AbstractSequencer
         return getBufferSize() - (produced - consumed);
     }
 
+    /**
+     * 初始化
+     */
     private void initialiseAvailableBuffer()
     {
         for (int i = availableBuffer.length - 1; i != 0; i--)
@@ -209,6 +212,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
     }
 
     /**
+     * 发布消费序号
      * @see Sequencer#publish(long)
      */
     @Override
@@ -219,6 +223,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
     }
 
     /**
+     * 批量发布可消费的序号
      * @see Sequencer#publish(long, long)
      */
     @Override
@@ -255,6 +260,12 @@ public final class MultiProducerSequencer extends AbstractSequencer
         setAvailableBufferValue(calculateIndex(sequence), calculateAvailabilityFlag(sequence));
     }
 
+    /**
+     * 多生产者模式每生产发布一个消息 就把对应的数组位置设置为可用的
+     * 
+     * @param index
+     * @param flag
+     */
     private void setAvailableBufferValue(int index, int flag)
     {
         long bufferAddress = (index * SCALE) + BASE;
@@ -262,7 +273,10 @@ public final class MultiProducerSequencer extends AbstractSequencer
     }
 
     /**
-     * @see Sequencer#isAvailable(long)
+     * 是不是在同一圈里面
+     * true:在同一圈里面
+     * false:没有在同一圈里面 表示绕环了表示这个位置不合法
+     * 生产者每生产一个标记一下 消费者获取的时候按同样的规则计算对比 如果不一样 就证明有问题
      */
     @Override
     public boolean isAvailable(long sequence)
@@ -278,6 +292,7 @@ public final class MultiProducerSequencer extends AbstractSequencer
     {
         for (long sequence = lowerBound; sequence <= availableSequence; sequence++)
         {
+        	//检查获取的位置是否合法 false表示不合法
             if (!isAvailable(sequence))
             {
                 return sequence - 1;
@@ -287,11 +302,22 @@ public final class MultiProducerSequencer extends AbstractSequencer
         return availableSequence;
     }
 
+    /**
+     * 右移动 无符号右移 无论是正数还是负数，高位补0
+     * 和 sequence / bufferSize 等价为了提升速度用的是位移
+     * @param sequence
+     * @return
+     */
     private int calculateAvailabilityFlag(final long sequence)
     {
         return (int) (sequence >>> indexShift);
     }
 
+    /**
+     * 获取在数组中的位置
+     * @param sequence
+     * @return
+     */
     private int calculateIndex(final long sequence)
     {
         return ((int) sequence) & indexMask;

@@ -111,6 +111,7 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     }
 
     /**
+     * 单生产者模式下核心方法, 获取合法的序号 
      * @see Sequencer#next(int)
      */
     @Override
@@ -120,28 +121,35 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
         {
             throw new IllegalArgumentException("n must be > 0 and < bufferSize");
         }
-
+        //当前序号
         long nextValue = this.nextValue;
-
+        //要获取的序号
         long nextSequence = nextValue + n;
+        //要获取的序号减去数组长度 用于判断消息是否覆盖吗,也就是说消费者还没有来得及消费绕了一圈
         long wrapPoint = nextSequence - bufferSize;
+        //缓存的最慢消费者消费到哪里了
         long cachedGatingSequence = this.cachedValue;
 
+        //wrapPoint > cachedGatingSequence:如果这个成立表示 消费者消费的太慢了,已经被生产者追上了 消费要产生覆盖
+        //cachedGatingSequence > nextValue:这种情况是消费者消费太快了 已经超过生产者了 这种情况什么时候发送???
         if (wrapPoint > cachedGatingSequence || cachedGatingSequence > nextValue)
         {
+        	//当发生绕环(生产者追上消费者,或者消费者追上生产者)现象的情况下
+        	//记录下当前生产的位置
             cursor.setVolatile(nextValue);  // StoreLoad fence
 
             long minSequence;
+            //因为发生了绕环现象,这里就循环等待,直到最慢的消费者大于wrapPoint
             while (wrapPoint > (minSequence = Util.getMinimumSequence(gatingSequences, nextValue)))
             {
                 LockSupport.parkNanos(1L); // TODO: Use waitStrategy to spin?
             }
-
+            //把消费最慢的消费者进度缓存起来用于下次判断
             this.cachedValue = minSequence;
         }
-
+        //把要获取的序号缓存起来
         this.nextValue = nextSequence;
-
+        //返回当前序号
         return nextSequence;
     }
 
@@ -203,7 +211,10 @@ public final class SingleProducerSequencer extends SingleProducerSequencerFields
     @Override
     public void publish(long sequence)
     {
+    	//当前生产到哪里了
         cursor.set(sequence);
+        //唤醒操作:如果消费者没有堵塞就忽略,如果堵塞就换醒
+        //堵塞是因为生产者生产太慢了
         waitStrategy.signalAllWhenBlocking();
     }
 
