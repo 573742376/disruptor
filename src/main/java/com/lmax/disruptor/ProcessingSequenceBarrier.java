@@ -17,6 +17,7 @@ package com.lmax.disruptor;
 
 
 /**
+ * 对应一组消费者
  * {@link SequenceBarrier} handed out for gating {@link EventProcessor}s on a cursor sequence and optional dependent {@link EventProcessor}(s),
  * using the given WaitStrategy.
  */

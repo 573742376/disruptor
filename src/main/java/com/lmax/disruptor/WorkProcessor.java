@@ -34,6 +34,8 @@ public final class WorkProcessor<T>
     private final SequenceBarrier sequenceBarrier;
     private final WorkHandler<? super T> workHandler;
     private final ExceptionHandler<? super T> exceptionHandler;
+    
+    /**多个消费者对应一个计数器，导致的结果就是每个消息只能被一个消费者消费 不可以重复消费 **/
     private final Sequence workSequence;
 
     private final EventReleaser eventReleaser = new EventReleaser()

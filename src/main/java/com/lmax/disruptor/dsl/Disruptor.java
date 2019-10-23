@@ -227,6 +227,7 @@ public class Disruptor<T>
 
 
     /**
+     * 
      * Set up a {@link WorkerPool} to distribute an event to one of a pool of work handler threads.
      * Each event will only be processed by one of the work handlers.
      * The Disruptor will automatically start this processors when {@link #start()} is called.
@@ -612,6 +613,7 @@ public class Disruptor<T>
     {
     	
         final SequenceBarrier sequenceBarrier = ringBuffer.newBarrier(barrierSequences);
+        
         
         final WorkerPool<T> workerPool = new WorkerPool<>(ringBuffer, sequenceBarrier, exceptionHandler, workHandlers);
 

@@ -56,6 +56,7 @@ public final class WorkerPool<T>
         final int numWorkers = workHandlers.length;
         workProcessors = new WorkProcessor[numWorkers];
 
+        //多个消费者对应一个计数器
         for (int i = 0; i < numWorkers; i++)
         {
             workProcessors[i] = new WorkProcessor<>(
