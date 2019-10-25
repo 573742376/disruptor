@@ -82,6 +82,7 @@ abstract class RingBufferFields<E> extends RingBufferPad
         Sequencer sequencer)
     {
         this.sequencer = sequencer;
+        
         this.bufferSize = sequencer.getBufferSize();
 
         if (bufferSize < 1)

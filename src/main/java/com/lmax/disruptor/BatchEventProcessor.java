@@ -40,7 +40,7 @@ public final class BatchEventProcessor<T>
     
     /**RingBuffer **/
     private final DataProvider<T> dataProvider;
-    /**一组对应一个 这么就是一组那凡是调用了 disruptor的 createEventProcessors 方法**/
+    /**一组消费者对应一个Barrier 用来隔离**/
     private final SequenceBarrier sequenceBarrier;
     /**一个消费者 **/
     private final EventHandler<? super T> eventHandler;
@@ -164,13 +164,15 @@ public final class BatchEventProcessor<T>
         {
             try
             {
+            	//获取当前生产者生产到哪里了
                 final long availableSequence = sequenceBarrier.waitFor(nextSequence);
+                
                 if (batchStartAware != null && availableSequence >= nextSequence)
                 {
                     batchStartAware.onBatchStart(availableSequence - nextSequence + 1);
                 }
 
-                
+                //循环取出没有消费过的消息进行处理
                 while (nextSequence <= availableSequence)
                 {
                     event = dataProvider.get(nextSequence);

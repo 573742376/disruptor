@@ -34,7 +34,7 @@ public class EventHandlerGroup<T>
     private final ConsumerRepository<T> consumerRepository;
     /**
              * 消费者进度记录 这个是复制内容 不是里面的引用
-             * 上一组的记录
+             * 上一组的记录 
      */
     private final Sequence[] sequences;
 

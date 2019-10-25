@@ -287,6 +287,9 @@ public final class MultiProducerSequencer extends AbstractSequencer
         return UNSAFE.getIntVolatile(availableBuffer, bufferAddress) == flag;
     }
 
+    /**
+     * 对序号进行检查 返回合理的数据，一般情况下是返回 availableSequence
+     */
     @Override
     public long getHighestPublishedSequence(long lowerBound, long availableSequence)
     {

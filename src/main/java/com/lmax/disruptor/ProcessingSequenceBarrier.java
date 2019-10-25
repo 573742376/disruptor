@@ -29,7 +29,7 @@ final class ProcessingSequenceBarrier implements SequenceBarrier
     /**依赖的上一组消费者进度 ,如果是第一组那就是当前生产者进度**/
     private final Sequence dependentSequence;
     
-    /** **/
+   
     private volatile boolean alerted = false;
     
     /**当前生产者记录 **/
@@ -68,7 +68,7 @@ final class ProcessingSequenceBarrier implements SequenceBarrier
         
         long availableSequence = waitStrategy.waitFor(sequence, cursorSequence, dependentSequence, this);
 
-        //这个判断貌似是多余的???
+        //如果获取的序号小于 要获得的就返回 获得的序号
         if (availableSequence < sequence)
         {
             return availableSequence;
